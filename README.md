@@ -17,8 +17,9 @@ python zero_file_finder.py
 ```
 
 デフォルトでは以下の設定で実行されます：
-- 検索対象ディレクトリ: `/Users/hiroyuki/Documents/個人事業`
+- 検索対象ディレクトリ: `/Users/hiroyuki/Downloads`
 - 結果出力ファイル: `/Users/hiroyuki/Documents/listup.csv`
+- エラー情報出力ファイル: `/Users/hiroyuki/Documents/error.csv`
 
 ## 依存関係
 
