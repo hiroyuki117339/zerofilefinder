@@ -8,7 +8,7 @@ def is_all_zero(file_path):
         with open(file_path, 'rb') as f:
             data = f.read(200)
             # Check if all bytes are zero
-            return all(b == 0 for b in data)
+            return True, all(b == 0 for b in data)
     except (OSError, IOError) as e:
         return False, str(e)
 
@@ -23,8 +23,7 @@ def search_zero_files(root_dir, output_file):
         for filename in filenames:
             file_path = os.path.join(dirpath, filename)
             result = is_all_zero(file_path)
-            if result is not False:
-                if result is True:
+            if result[0]:
                     file_size = os.path.getsize(file_path)
                     timestamp = os.path.getmtime(file_path)
                     timestamp_str = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
@@ -37,7 +36,7 @@ def search_zero_files(root_dir, output_file):
                         'timestamp': timestamp_str
                     })
                     print(f"Found: {file_path} (Size: {file_size} bytes)")
-            else:
+            elif not result[0]:
                 error_results.append({
                     'path': os.path.dirname(file_path),
                     'filename': filename,
