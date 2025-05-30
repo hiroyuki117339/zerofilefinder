@@ -45,7 +45,7 @@ def search_zero_files(root_dir, output_file):
         writer.writerows(results)
 
 if __name__ == '__main__':
-    root_dir = '/Users/hiroyuki/Documents/個人事業'
+    root_dir = '/Users/hiroyuki/Downloads'
     output_file = '/Users/hiroyuki/Documents/listup.csv'
     
     print(f"Searching for files in {root_dir}...")
