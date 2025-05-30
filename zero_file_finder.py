@@ -30,6 +30,7 @@ def search_zero_files(root_dir, output_file):
                     timestamp_str = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
                     
                     results.append({
+                        'full_path': file_path,
                         'path': os.path.dirname(file_path),
                         'filename': filename,
                         'size': file_size,
@@ -46,7 +47,7 @@ def search_zero_files(root_dir, output_file):
     
     # Write results to CSV
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['path', 'filename', 'size', 'timestamp']
+        fieldnames = ['full_path', 'path', 'filename', 'size', 'timestamp']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
