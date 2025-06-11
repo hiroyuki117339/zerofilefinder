@@ -14,32 +14,47 @@ def is_all_zero(file_path):
     except (OSError, IOError) as e:
         return False, str(e)
 
-def search_zero_files(root_dir, output_file):
+def search_zero_files(root_dir, regular_output_file, broken_output_file):
     """Search for files with all-zero first 200 bytes and write results to CSV
     Also records files with read errors in error.csv"""
-    results = []
+    regular_results = []
+    corrupted_results = []
     error_results = []
     
     # Walk through the directory recursively
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
+            # Skip system files
+            if (filename == '.DS_Store' or
+                filename.lower() == 'thumbs.db' or
+                (filename.lower().startswith('thumbcache_') and filename.lower().endswith('.db'))):
+                continue
+            
             file_path = os.path.join(dirpath, filename)
             result = is_all_zero(file_path)
             if result[0]:
+                file_size = os.path.getsize(file_path)
+                timestamp = os.path.getmtime(file_path)
+                timestamp_str = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                
                 if result[1]:  # Check if all bytes are zero
-                    file_size = os.path.getsize(file_path)
-                    timestamp = os.path.getmtime(file_path)
-                    timestamp_str = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-                    
-                    results.append({
+                    corrupted_results.append({
                         'full_path': file_path,
                         'path': os.path.dirname(file_path),
                         'filename': filename,
                         'size': file_size,
                         'timestamp': timestamp_str
                     })
-                    print(f"Found: {file_path} (Size: {file_size} bytes)")
-                # If result[1] is False, file exists but doesn't have all-zero bytes
+                    print(f"Found corrupted file: {file_path} (Size: {file_size} bytes)")
+                else:  # Regular file (not all-zero bytes)
+                    regular_results.append({
+                        'full_path': file_path,
+                        'path': os.path.dirname(file_path),
+                        'filename': filename,
+                        'size': file_size,
+                        'timestamp': timestamp_str
+                    })
+                    print(f"Found valid file: {file_path} (Size: {file_size} bytes)")
             elif not result[0]:
                 error_results.append({
                     'path': os.path.dirname(file_path),
@@ -48,16 +63,29 @@ def search_zero_files(root_dir, output_file):
                 })
                 print(f"Error reading {file_path}: {result[1]}")
     
-    # Write results to CSV
-    with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+    # Write valid results to CSV
+    with open(regular_output_file, 'w', newline='', encoding='utf-8') as csvfile:
         fieldnames = ['full_path', 'path', 'filename', 'size', 'timestamp']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        # Write count as first line
+        csvfile.write(f"Number of regular files: {len(regular_results)}\n")
         writer.writeheader()
-        writer.writerows(results)
+        writer.writerows(regular_results)
+        print(f"\nRegular files have been written to {regular_output_file}")
+
+    # Write broken results to CSV
+    with open(broken_output_file, 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['full_path', 'path', 'filename', 'size', 'timestamp']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        # Write count as first line
+        csvfile.write(f"Number of broken files: {len(corrupted_results)}\n")
+        writer.writeheader()
+        writer.writerows(corrupted_results)
+        print(f"\nBroken files have been written to {broken_output_file}")
 
     # Write error results to error.csv if there are any errors
     if error_results:
-        error_file = os.path.join(os.path.dirname(output_file), 'error.csv')
+        error_file = os.path.join(os.path.dirname(regular_output_file), 'error.csv')
         with open(error_file, 'w', newline='', encoding='utf-8') as error_csv:
             error_fieldnames = ['path', 'filename', 'error']
             error_writer = csv.DictWriter(error_csv, fieldnames=error_fieldnames)
@@ -66,9 +94,10 @@ def search_zero_files(root_dir, output_file):
             print(f"\nError information has been written to {error_file}")
 
 if __name__ == '__main__':
-    root_dir = '/Users/hiroyuki/Downloads'
-    output_file = '/Users/hiroyuki/Documents/listup.csv'
+    root_dir = '/Volumes/MacData/01.最新'
+    regular_output_file = '/Users/hiroyuki/Documents/regular_file_list.csv'
+    broken_output_file = '/Users/hiroyuki/Documents/broken_file_list.csv'
     
     print(f"Searching for files in {root_dir}...")
-    search_zero_files(root_dir, output_file)
-    print(f"\nResults have been written to {output_file}")
+    search_zero_files(root_dir, regular_output_file, broken_output_file)
+    print("\nSearch completed.")
